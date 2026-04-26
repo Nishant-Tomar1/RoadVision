@@ -3,10 +3,12 @@ services:
     name: pothole-detection-api
     env: python
     rootDir: backend
-    plan: standard
+    plan: free
     autoDeploy: true
     buildCommand: |
       apt-get update && apt-get install -y --no-install-recommends ffmpeg libgl1 libglib2.0-0 && rm -rf /var/lib/apt/lists/*
+      mkdir -p model
+      curl -L -o model/best.pt "$MODEL_WEIGHTS_URL"
       pip install --upgrade pip
       pip install -r requirements.txt
     startCommand: uvicorn main:app --host 0.0.0.0 --port 10000
@@ -15,6 +17,8 @@ services:
         value: 3.11.9
       - key: MODEL_PATH
         value: model/best.pt
+      - key: MODEL_WEIGHTS_URL
+        sync: false           # set this in the Render dashboard (keeps URL out of git)
       - key: CONF_THRESHOLD
         value: "0.3"
       - key: IOU_THRESHOLD
@@ -22,4 +26,4 @@ services:
       - key: TRACKER
         value: bytetrack.yaml
       - key: CORS_ORIGINS
-        value: "*"
+        sync: false           # set to your Vercel URL after step 4
