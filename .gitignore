@@ -1,0 +1,32 @@
+# Python
+__pycache__/
+*.pyc
+*.pyo
+.venv/
+venv/
+.env
+.env.local
+
+# Model weights (large binary)
+backend/model/*.pt
+backend/model/*.onnx
+
+# Inference artifacts
+backend/storage/uploads/*
+backend/storage/results/*
+!backend/storage/uploads/.gitkeep
+!backend/storage/results/.gitkeep
+
+# Node / Vite
+node_modules/
+dist/
+.vite/
+
+# Editor / OS
+.vscode/
+.idea/
+.DS_Store
+Thumbs.db
+
+# Notebooks (raw research)
+*.ipynb_checkpoints/
