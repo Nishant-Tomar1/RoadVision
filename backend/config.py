@@ -12,6 +12,9 @@ class Settings(BaseSettings):
     MAX_UPLOAD_SIZE: int = 100 * 1024 * 1024
     CORS_ORIGINS: str = "*"
 
+    GPU_INFERENCE_URL: str = ""
+    GPU_INFERENCE_TIMEOUT: int = 1200
+
     CLASS_NAMES: list[str] = ["pothole", "crack", "manhole"]
 
     BASE_DIR: Path = Path(__file__).resolve().parent

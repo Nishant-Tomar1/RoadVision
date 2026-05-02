@@ -29,3 +29,5 @@ services:
         value: bytetrack.yaml
       - key: CORS_ORIGINS
         sync: false           # set to your Vercel URL after step 5
+      - key: GPU_INFERENCE_URL
+        sync: false           # set to your Colab+ngrok URL (e.g. https://pothole-xxx.ngrok-free.app). Leave empty to run inference locally on Render CPU.

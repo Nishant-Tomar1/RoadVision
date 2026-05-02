@@ -9,3 +9,4 @@ torchvision==0.17.2
 opencv-python-headless==4.10.0.84
 numpy==1.26.4
 lapx==0.5.11
+requests==2.32.3

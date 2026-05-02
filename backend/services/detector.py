@@ -15,6 +15,7 @@ from pathlib import Path
 from typing import Callable, Optional
 
 import cv2
+import requests
 import torch
 from ultralytics import YOLO
 
@@ -160,4 +161,83 @@ class Detector:
             shutil.copyfile(src, dst)
 
 
-detector = Detector()
+class RemoteDetector:
+    """Forwards inference to a remote GPU server (Colab + ngrok)."""
+
+    def __init__(self, base_url: str) -> None:
+        self._base_url = base_url.rstrip("/")
+
+    def load(self) -> None:
+        try:
+            r = requests.get(f"{self._base_url}/health", timeout=10)
+            r.raise_for_status()
+            logger.info("Connected to remote GPU at %s", self._base_url)
+        except requests.RequestException as exc:
+            logger.warning("Remote GPU not reachable yet at %s: %s", self._base_url, exc)
+
+    @property
+    def is_ready(self) -> bool:
+        return True
+
+    def predict_video(
+        self,
+        source_path: Path,
+        job_id: str,
+        progress_cb: Optional[Callable[[int], None]] = None,
+    ) -> dict:
+        run_dir = settings.RESULT_DIR / job_id
+        if run_dir.exists():
+            shutil.rmtree(run_dir)
+        run_dir.mkdir(parents=True, exist_ok=True)
+
+        logger.info("[job %s] forwarding to remote GPU at %s", job_id, self._base_url)
+        started = time.perf_counter()
+
+        with source_path.open("rb") as fh:
+            files = {"file": (source_path.name, fh, "video/mp4")}
+            resp = requests.post(
+                f"{self._base_url}/predict",
+                files=files,
+                timeout=settings.GPU_INFERENCE_TIMEOUT,
+            )
+        resp.raise_for_status()
+        meta = resp.json()
+        remote_job_id = meta["job_id"]
+
+        playable = run_dir / "annotated.mp4"
+        with requests.get(
+            f"{self._base_url}/video/{remote_job_id}",
+            stream=True,
+            timeout=settings.GPU_INFERENCE_TIMEOUT,
+        ) as vr:
+            vr.raise_for_status()
+            with playable.open("wb") as out:
+                for chunk in vr.iter_content(chunk_size=1024 * 1024):
+                    if chunk:
+                        out.write(chunk)
+
+        if progress_cb is not None:
+            progress_cb(meta.get("frames_processed", 0))
+
+        elapsed = time.perf_counter() - started
+        logger.info("[job %s] remote inference done in %.2fs", job_id, elapsed)
+
+        return {
+            "video_path": playable,
+            "counts": meta["counts"],
+            "total_unique_objects": meta["total_unique_objects"],
+            "frames_processed": meta["frames_processed"],
+            "inference_seconds": meta.get("inference_seconds", round(elapsed, 2)),
+        }
+
+
+def _build_detector():
+    url = (settings.GPU_INFERENCE_URL or "").strip()
+    if url:
+        logger.info("Using remote GPU detector at %s", url)
+        return RemoteDetector(url)
+    logger.info("Using local detector")
+    return Detector()
+
+
+detector = _build_detector()
