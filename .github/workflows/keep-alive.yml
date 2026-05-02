@@ -3,7 +3,7 @@ name: Keep Render backend awake
 on:
   schedule:
     # Every 10 minutes. Render free tier sleeps after 15 min of inactivity.
-    - cron: '*/10 * * * *'
+    - cron: '*/2 * * * *'
   workflow_dispatch:  # lets you run it manually from the Actions tab
 
 jobs:
