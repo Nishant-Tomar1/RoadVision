@@ -25,17 +25,19 @@ export async function fetchJob(jobId, { signal } = {}) {
 
 /**
  * Poll /jobs/:id until status is "done" or "error".
- * Calls onProgress(jobStatus) on every tick.
- * Returns the final job status.
+ * Snappy at the start, then backs off so long jobs don't hammer the backend.
  */
-export async function pollJob(jobId, { onProgress, intervalMs = 700, signal } = {}) {
+export async function pollJob(jobId, { onProgress, signal } = {}) {
+  let tick = 0
   while (true) {
     if (signal?.aborted) throw new DOMException('aborted', 'AbortError')
     const status = await fetchJob(jobId, { signal })
     onProgress?.(status)
     if (status.status === 'done') return status
     if (status.status === 'error') throw new Error(status.error || 'Inference failed')
-    await new Promise((r) => setTimeout(r, intervalMs))
+    const wait = tick < 3 ? 1500 : tick < 10 ? 4000 : 8000
+    await new Promise((r) => setTimeout(r, wait))
+    tick++
   }
 }
 

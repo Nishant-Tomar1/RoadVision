@@ -40,7 +40,6 @@ export default function App() {
       })
       const final = await pollJob(accepted.job_id, {
         onProgress: setProgress,
-        intervalMs: 700,
         signal: ctrl.signal,
       })
       setResult({ ...final.result, job_id: final.job_id })

@@ -162,6 +162,8 @@ def video(job_id: str):
 NGROK_AUTHTOKEN = "PASTE_YOUR_NGROK_TOKEN_HERE"
 NGROK_STATIC_DOMAIN = "pothole-yourname.ngrok-free.app"  # claimed at dashboard.ngrok.com/domains
 
+import asyncio
+
 import nest_asyncio
 import uvicorn
 from pyngrok import ngrok
@@ -173,4 +175,6 @@ print("Public URL:", public_url)
 print("Set GPU_INFERENCE_URL on Render to this exact value, then restart the Render service.")
 
 nest_asyncio.apply()
-uvicorn.run(app, host="0.0.0.0", port=8000)
+config = uvicorn.Config(app, host="0.0.0.0", port=8000, log_level="info")
+server = uvicorn.Server(config)
+asyncio.get_event_loop().run_until_complete(server.serve())

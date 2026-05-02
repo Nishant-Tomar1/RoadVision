@@ -3,10 +3,6 @@ uvicorn[standard]==0.30.6
 python-multipart==0.0.9
 pydantic==2.9.2
 pydantic-settings==2.5.2
-ultralytics==8.3.27
-torch==2.2.2
-torchvision==0.17.2
 opencv-python-headless==4.10.0.84
 numpy==1.26.4
-lapx==0.5.11
 requests==2.32.3
